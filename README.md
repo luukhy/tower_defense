@@ -1,2 +1,2 @@
 # tower_defense
-Attempt to create tower defense game
+Attempt to create dino tower defense game
