@@ -1,9 +1,11 @@
+import random
 import sys
 
 from PyQt6 import QtCore, QtWidgets, uic
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QGraphicsScene
 
+from dino import Dino
 from game_map import GRID_SIZE, MAP_SIZE, TILE_SIZE, GameMap
 from meteoro import Meteoro
 from tower import Tower
@@ -26,10 +28,16 @@ class DinoDefense(QtWidgets.QMainWindow):
         self.map.add_to_scene(self.scene)
 
         # meteoro setup
-        self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
-        self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
-        self.scene.addItem(self.meteoro)
-        self.set_meteoro_tiles_occupied(self.meteoro_pos)
+        # self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
+        # self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
+        # self.scene.addItem(self.meteoro)
+        # self.set_meteoro_tiles_occupied(self.meteoro_pos)
+
+        # dinos
+        dinos_init_config = {"num_dinos": 30, "first_wave_type": "triceratops"}
+        self.dinos = []
+        self.initiate_dinos(dinos_init_config)
+        self.add_dinos_to_scene()
 
         # towers
         self.towers = []
@@ -40,7 +48,36 @@ class DinoDefense(QtWidgets.QMainWindow):
         self.timer.start(16)  # ~60 FPS
 
     def update_game(self):
+        self.update_dinos()
+
         pass
+
+    def initiate_dinos(self, config):
+        dinos_num = config["num_dinos"]
+        dinos_type = config["first_wave_type"]
+        dinos_pos = self.generate_dinos_pos(dinos_num)
+        for pos in dinos_pos:
+            self.dinos.append(Dino(pos["y"], pos["x"], dinos_type))
+
+    def add_dinos_to_scene(self):
+        for dino in self.dinos:
+            self.scene.addItem(dino)
+
+    def generate_dinos_pos(self, dinos_num):
+        walkable_tiles = self.map.get_walkable_tiles()
+        if dinos_num > len(walkable_tiles):
+            dinos_num = len(walkable_tiles)
+
+        random_idx = set()
+        while len(random_idx) < dinos_num:
+            random_id = random.randint(0, len(walkable_tiles))
+            random_idx.add(random_id)
+
+        pos = []
+        for id in random_idx:
+            tile = walkable_tiles[id]
+            pos.append({"x": tile.x_grid, "y": tile.y_grid})
+        return pos
 
     def set_meteoro_tiles_occupied(self, meteoro_pos: tuple):
         for row in range(meteoro_pos[1], meteoro_pos[1] + 3):
@@ -50,6 +87,9 @@ class DinoDefense(QtWidgets.QMainWindow):
                 tile = self.map.grid[row][col]
                 tile.set_walkability(False)
                 tile.set_emptiness(False)
+
+    def update_dinos(self):
+        pass
 
     def handle_map_click(self, x, y):
         col = x // TILE_SIZE

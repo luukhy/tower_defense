@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import QGraphicsPixmapItem
 
 resources_path = Path("res/textures")
 
-towers_textures = {"default": resources_path / Path("triceratops.png")}
+towers_textures = {"default": resources_path / Path("tower.png")}
 
 
 class Tower(QGraphicsPixmapItem):

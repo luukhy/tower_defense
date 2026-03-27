@@ -22,6 +22,8 @@ class Tile(QGraphicsPixmapItem):
     def __init__(self, x: int, y: int, tile_type: str, size: int = TILE_SIZE):
         super().__init__()
         self.setPos(x * size, y * size)
+        self.x_grid = x
+        self.y_grid = y
         self.texture = QPixmap(TILE_TEXTURES[tile_type]).scaled(TILE_SIZE, TILE_SIZE)
         self.setPixmap(self.texture)
         self.setZValue(-1)
@@ -54,6 +56,12 @@ class GameMap:
         self.grid_size = GRID_SIZE
         self.grid = self.generate_map()
 
+    def __iter__(self):
+        """Allows iterating over all tiles in a flattened way."""
+        for row in self.grid:
+            for tile in row:
+                yield tile
+
     def add_to_scene(self, scene):
         for row in self.grid:
             for tile in row:
@@ -82,3 +90,16 @@ class GameMap:
                 )
             grid.append(grid_row)
         return grid
+
+    def get_walkable_tiles_num(self):
+        num = 0
+        for tile in self:
+            if tile.is_walkable:
+                num += 1
+        return num
+
+    def get_walkable_tiles(self):
+        tiles_walk = []
+        for tile in self:
+            tiles_walk.append(tile)
+        return tiles_walk
