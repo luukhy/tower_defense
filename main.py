@@ -1,5 +1,6 @@
 import random
 import sys
+import time
 
 from PyQt6 import QtCore, QtWidgets, uic
 from PyQt6.QtGui import QPixmap
@@ -28,7 +29,7 @@ class DinoDefense(QtWidgets.QMainWindow):
         self.map.add_to_scene(self.scene)
 
         # meteoro setup
-        # self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
+        self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
         # self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
         # self.scene.addItem(self.meteoro)
         # self.set_meteoro_tiles_occupied(self.meteoro_pos)
@@ -43,13 +44,27 @@ class DinoDefense(QtWidgets.QMainWindow):
         self.towers = []
 
         # timer
+        self.last_frame_time = time.time()
+
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_game)
         self.timer.start(16)  # ~60 FPS
 
     def update_game(self):
-        self.update_dinos()
+        current_time = time.time()
+        dt = current_time - self.last_frame_time
+        self.last_frame_time = current_time
 
+        if dt > 0.1:
+            dt = 0.1
+
+        for dino in self.dinos[:]:
+            reached_end = dino.move_logic(dt)
+
+            if reached_end:
+                print("Dino hit the Base!")
+                self.scene.removeItem(dino)
+                self.dinos.remove(dino)
         pass
 
     def initiate_dinos(self, config):
