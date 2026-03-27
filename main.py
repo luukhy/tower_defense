@@ -85,7 +85,7 @@ class DinoDefense(QtWidgets.QMainWindow):
 
         random_idx = set()
         while len(random_idx) < dinos_num:
-            random_id = random.randint(0, len(walkable_tiles))
+            random_id = random.randint(0, len(walkable_tiles) - 1)
             random_idx.add(random_id)
 
         pos = []
