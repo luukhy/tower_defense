@@ -8,7 +8,7 @@ from game_map import TILE_SIZE
 
 texture_path = Path("res/textures")
 
-dino_textures = {"triceratops": texture_path / Path("triceratops.png")}
+dino_textures = {"triceratops": texture_path / Path("t_rex.png")}
 
 
 class Dino(QGraphicsPixmapItem):

@@ -30,9 +30,9 @@ class DinoDefense(QtWidgets.QMainWindow):
 
         # meteoro setup
         self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
-        # self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
-        # self.scene.addItem(self.meteoro)
-        # self.set_meteoro_tiles_occupied(self.meteoro_pos)
+        self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
+        self.scene.addItem(self.meteoro)
+        self.set_meteoro_tiles_occupied(self.meteoro_pos)
 
         # dinos
         dinos_init_config = {"num_dinos": 30, "first_wave_type": "triceratops"}
@@ -71,8 +71,23 @@ class DinoDefense(QtWidgets.QMainWindow):
         dinos_num = config["num_dinos"]
         dinos_type = config["first_wave_type"]
         dinos_pos = self.generate_dinos_pos(dinos_num)
+
+        target_x = self.meteoro_pos[1]
+        target_y = self.meteoro_pos[0]
+
         for pos in dinos_pos:
-            self.dinos.append(Dino(pos["y"], pos["x"], dinos_type))
+            start_x = pos["x"]
+            start_y = pos["y"]
+
+            path = self.map.get_path_a_star(start_x, start_y, target_x, target_y)
+
+            if path:
+                new_dino = Dino(
+                    grid_y=start_y, grid_x=start_x, dino_type=dinos_type, waypoints=path
+                )
+                self.dinos.append(new_dino)
+            else:
+                print(f"Skipped dino at {start_x}, {start_y}: No path to base!")
 
     def add_dinos_to_scene(self):
         for dino in self.dinos:
@@ -97,11 +112,10 @@ class DinoDefense(QtWidgets.QMainWindow):
     def set_meteoro_tiles_occupied(self, meteoro_pos: tuple):
         for row in range(meteoro_pos[1], meteoro_pos[1] + 3):
             for col in range(meteoro_pos[0], meteoro_pos[0] + 3):
-                if 0 >= row > GRID_SIZE[1] and 0 >= col > GRID_SIZE[0]:
+                if not (0 <= row < GRID_SIZE[1] and 0 <= col < GRID_SIZE[0]):
                     continue
                 tile = self.map.grid[row][col]
-                tile.set_walkability(False)
-                tile.set_emptiness(False)
+                tile.is_empty = False
 
     def update_dinos(self):
         pass
