@@ -13,6 +13,7 @@ class Meteoro(QGraphicsPixmapItem):
         # TODO: get rid of the hardcoded sclaing factors
         self.texture = QPixmap(stages_textures[1]).scaled(240, 240)
         self.setPixmap(self.texture)
+        self.grid_pos = (grid_y, grid_x)
         self.setPos(grid_x * tile_size, grid_y * tile_size)
         self.setZValue(1)
 

@@ -4,7 +4,7 @@ from pathlib import Path
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QGraphicsPixmapItem
 
-from game_map import TILE_SIZE
+from world.game_map import TILE_SIZE
 
 texture_path = Path("res/textures")
 

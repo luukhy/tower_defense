@@ -43,7 +43,7 @@
   <customwidget>
    <class>MapView</class>
    <extends>QGraphicsView</extends>
-   <header>map_view</header>
+   <header>world.map_view</header>
   </customwidget>
  </customwidgets>
  <resources/>
