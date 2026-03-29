@@ -25,7 +25,6 @@ class GameManager:
         self.scene.addItem(self.meteoro)
         self.set_meteoro_tiles_occupied(self.meteoro_pos)
 
-        # dinos
         self.wave_manager = WaveManager(
             self.game_map, target_x=self.meteoro_pos[1], target_y=self.meteoro_pos[0]
         )
@@ -35,10 +34,9 @@ class GameManager:
         for dino in self.dinos:
             self.scene.addItem(dino)
 
-        # towers
         self.towers = []
+        self.projectiles = []
 
-        # timer
         self.last_frame_time = time.time()
 
         self.timer = QtCore.QTimer()
@@ -55,6 +53,7 @@ class GameManager:
 
         self.update_dinos(dt)
         self.update_towers(dt)
+        self.update_projectiles(dt)
 
     def set_meteoro_tiles_occupied(self, meteoro_pos: tuple):
         for row in range(meteoro_pos[1], meteoro_pos[1] + 3):
@@ -73,8 +72,25 @@ class GameManager:
                 self.scene.removeItem(dino)
                 self.dinos.remove(dino)
 
-    def update_towers(dt):
-        pass
+            if dino.hp <= 0:
+                self.scene.removeItem(dino)
+                self.dinos.remove(dino)
+
+    def update_towers(self, dt):
+        for tower in self.towers:
+            new_bullet = tower.update_logic(dt, self.dinos)
+            if new_bullet:
+                print("new buller")
+                self.projectiles.append(new_bullet)
+                self.scene.addItem(new_bullet)
+
+    def update_projectiles(self, dt):
+        for proj in self.projectiles[:]:
+            exploded = proj.update_logic(dt, self.dinos)
+
+            if exploded:
+                self.scene.removeItem(proj)
+                self.projectiles.remove(proj)
 
     def handle_map_click(self, x, y):
         col = x // TILE_SIZE

@@ -1,0 +1,34 @@
+[DONE] (2 pkt) Implementacja systemu ścieżek przeciwników opartego na grafie lub waypointach.
+
+
+[DONE] (2 pkt) Implementacja systemu fal przeciwników sterowanego konfiguracją (np. JSON).
+
+
+(2 pkt) Implementacja systemu wież opartych na klasie bazowej z polimorfizmem.
+
+
+(2 pkt) Implementacja systemu wyboru celu przez wieżę (np. najbliższy, najsłabszy, najbliżej celu).
+
+
+[DONE] (2 pkt) Implementacja systemu pocisków z czasem lotu i kolizją.
+
+
+(2 pkt) Implementacja systemu zarządzania zasobami i ekonomią gry (koszt budowy, nagrody, balans).
+
+
+(1 pkt) Implementacja systemu ulepszania wież z drzewem upgrade’ów.
+
+
+(1 pkt) Implementacja systemu stanów przeciwników (np. spowolnienie, zatrucie).
+
+
+(1 pkt) Implementacja mechanizmu konfiguracji mapy i fal przeciwników z pliku.
+
+
+(+3 pkt) Implementacja dynamicznego pathfindingu (A) dla przeciwników*, który reaguje na nowe wieże.
+
+
+(+3 pkt) Implementacja systemu balansowania fal przeciwników.
+
+
+(+4 pkt) Implementacja symulacji gry w trybie przyspieszonym do testowania balansu.
