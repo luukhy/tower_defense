@@ -3,6 +3,17 @@ revision = 3
 requires-python = ">=3.12"
 
 [[package]]
+name = "dino-defense"
+version = "0.1.0"
+source = { editable = "." }
+dependencies = [
+    { name = "pyqt6" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pyqt6", specifier = ">=6.0.0" }]
+
+[[package]]
 name = "pyqt6"
 version = "6.10.2"
 source = { registry = "https://pypi.org/simple" }
@@ -54,14 +65,3 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/96/f2/b68fd566f7f86dbb53d933489e70487cabaea0e0161690e4899653bbc7fb/pyqt6_sip-13.11.1-cp314-cp314-win_amd64.whl", hash = "sha256:581e287bf42587593b88b30d9db06ed0fccbf40f345a5bd3ec3f00a5692e2430", size = 55055, upload-time = "2026-03-09T13:01:33.467Z" },
     { url = "https://files.pythonhosted.org/packages/8d/42/efb7ced69f7d1d31eb8f19b2d778aeb182be7e070569d02b9057ac478e3e/pyqt6_sip-13.11.1-cp314-cp314-win_arm64.whl", hash = "sha256:42b62530a9b6a9c6e29c2941b8ab78258652da0aeae4eb1fc9a0631d19a7a7b2", size = 49597, upload-time = "2026-03-09T13:01:34.49Z" },
 ]
-
-[[package]]
-name = "tower-defense"
-version = "0.1.0"
-source = { editable = "." }
-dependencies = [
-    { name = "pyqt6" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "pyqt6", specifier = ">=6.0.0" }]

@@ -16,16 +16,21 @@ class WaveManager:
         self.game_map = game_map
         self.target_x = target_x
         self.target_y = target_y
+        self.config = config
 
-    def spawn_wave(self, config) -> list[Dino]:
+    def spawn_wave(self, wave) -> list[Dino]:
         """Calculates a wave and RETURNS a list of ready-to-go Dinos."""
-        dinos_num = config["num_dinos"]
-        dinos_type = config["first_wave_type"]
-        dinos_pos = self.generate_dinos_pos(dinos_num)
+        wave_config = self.config[str(wave)]
+        dinos_num_list = wave_config["dinos_num"]
+        dino_types_list = wave_config["dino_types"]
+
+        total_dinos = sum(dinos_num_list)
+        dinos_pos = self.generate_dinos_pos(total_dinos)
 
         new_wave = []
 
-        for pos in dinos_pos:
+        for i, pos in enumerate(dinos_pos):
+            dino_type = self.get_dino_type(i, dino_types_list, dinos_num_list)
             start_x = pos["x"]
             start_y = pos["y"]
 
@@ -35,13 +40,27 @@ class WaveManager:
 
             if path:
                 new_dino = Dino(
-                    grid_y=start_y, grid_x=start_x, dino_type=dinos_type, waypoints=path
+                    grid_y=start_y, grid_x=start_x, dino_type=dino_type, waypoints=path
                 )
-                new_wave.append(new_dino)  # Add to our local list
+                new_wave.append(new_dino)
             else:
                 print(f"Skipped dino at {start_x}, {start_y}: No path to base!")
 
         return new_wave
+
+    def get_dino_type(self, curr_id: int, types_list: list, counts_list: list) -> str:
+        """
+        Determines the dino type based on its index.
+        Example: If counts are [20, 10], IDs 0-19 are Type 0, IDs 20-29 are Type 1.
+        """
+        running_sum = 0
+        for i, count in enumerate(counts_list):
+            running_sum += count
+            if curr_id < running_sum:
+                return types_list[i]
+
+        # if anything goes wrong
+        return types_list[-1]
 
     def add_dinos_to_scene(self):
         for dino in self.dinos:

@@ -30,8 +30,7 @@ class GameManager:
             self.game_map, target_x=self.meteoro_pos[1], target_y=self.meteoro_pos[0]
         )
 
-        dinos_init_config = {"num_dinos": 30, "first_wave_type": "triceratops"}
-        self.dinos = self.wave_manager.spawn_wave(dinos_init_config)
+        self.dinos = self.wave_manager.spawn_wave(wave=1)
 
         for dino in self.dinos:
             self.scene.addItem(dino)
@@ -54,14 +53,8 @@ class GameManager:
         if dt > 0.1:
             dt = 0.1
 
-        for dino in self.dinos[:]:
-            reached_end = dino.move_logic(dt)
-
-            if reached_end:
-                print("Dino hit the Base!")
-                self.scene.removeItem(dino)
-                self.dinos.remove(dino)
-        pass
+        self.update_dinos(dt)
+        self.update_towers(dt)
 
     def set_meteoro_tiles_occupied(self, meteoro_pos: tuple):
         for row in range(meteoro_pos[1], meteoro_pos[1] + 3):
@@ -71,7 +64,16 @@ class GameManager:
                 tile = self.game_map.grid[row][col]
                 tile.is_empty = False
 
-    def update_dinos(self):
+    def update_dinos(self, dt):
+        for dino in self.dinos[:]:
+            reached_end = dino.move_logic(dt)
+
+            if reached_end:
+                print("Dino hit the Base!")
+                self.scene.removeItem(dino)
+                self.dinos.remove(dino)
+
+    def update_towers(dt):
         pass
 
     def handle_map_click(self, x, y):
@@ -88,5 +90,11 @@ class GameManager:
                 new_tower = Tower(row, col, TILE_SIZE)
                 self.towers.append(new_tower)
                 self.scene.addItem(new_tower)
+                for dino in self.dinos:
+                    curr_x, curr_y = dino.get_curr_pos_grid()
+                    new_waypoints = self.game_map.get_path_a_star(
+                        curr_x, curr_y, col, row
+                    )
+                    dino.update_path(new_waypoints)
             else:
                 print("Cannot build here!")

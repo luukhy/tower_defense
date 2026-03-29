@@ -1,14 +1,21 @@
 import math
 from pathlib import Path
 
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QPixmap, QTransform
 from PyQt6.QtWidgets import QGraphicsPixmapItem
 
 from world.game_map import TILE_SIZE
 
 texture_path = Path("res/textures")
 
-dino_textures = {"triceratops": texture_path / Path("t_rex.png")}
+dino_textures = {
+    "triceratops": texture_path / Path("triceratops.png"),
+    "t_rex": texture_path / Path("t_rex.png"),
+}
+
+
+def sign(x):
+    return (x > 0) - (x < 0)
 
 
 class Dino(QGraphicsPixmapItem):
@@ -37,6 +44,7 @@ class Dino(QGraphicsPixmapItem):
         # the exact logical position of the Dino - float values for smooth movement
         self.exact_x = float(grid_x * tile_size)
         self.exact_y = float(grid_y * tile_size)
+        self.direction = 0
 
         # visual offset handling
         self.offset_y = self.texture.height() - tile_size
@@ -53,6 +61,7 @@ class Dino(QGraphicsPixmapItem):
     def move_logic(self, dt: float) -> bool:
         """Called every frame. Returns True if reached the end, False otherwise."""
 
+        prev_dir = self.direction
         if not self.waypoints:
             return True
 
@@ -72,8 +81,25 @@ class Dino(QGraphicsPixmapItem):
             self.exact_x += (dx / distance) * step
             self.exact_y += (dy / distance) * step
 
+        self.grid_x = int(self.exact_x // TILE_SIZE)
+
+        self.grid_y = int(self.exact_y // TILE_SIZE)
+
+        curr_dir = sign(dx)
+        if curr_dir != prev_dir:
+            transform = QTransform().scale(1, -1)
+            self.texture = self.texture.transformed(transform)
         self.setPos(int(self.exact_x), int(self.exact_y) - self.offset_y)
 
         self.setZValue(self.exact_y + 40)
 
         return False
+
+    def update_path(self, waypoints):
+        self.waypoints = list(waypoints)
+
+    def get_curr_pos(self):
+        return (self.exact_x, self.exact_y)
+
+    def get_curr_pos_grid(self):
+        return (self.grid_x, self.grid_y)
