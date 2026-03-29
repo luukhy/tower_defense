@@ -1,8 +1,12 @@
 """This module contains the implementation for wave manager class."""
 
+import json
 import random
 
 from entities.dino import Dino
+
+with open("core/config.json", "r") as file:
+    config = json.load(file)
 
 
 class WaveManager:
@@ -58,3 +62,7 @@ class WaveManager:
             tile = walkable_tiles[id]
             pos.append({"x": tile.x_grid, "y": tile.y_grid})
         return pos
+
+
+if __name__ == "__main__":
+    print(config)

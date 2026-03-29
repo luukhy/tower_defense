@@ -1,0 +1,14 @@
+[project]
+name = "dino-defense"
+version = "0.1.0"
+description = "Dino tower defense game"
+dependencies = [
+    "PyQt6>=6.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]  # Tells Python to look for modules in the current directory
