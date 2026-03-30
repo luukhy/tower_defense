@@ -4,6 +4,7 @@ from PyQt6 import QtWidgets, uic
 from PyQt6.QtWidgets import QGraphicsScene
 
 from core.game_manager import GameManager
+from ui.stats_menu import SlidingStatsMenu
 from ui.tower_menu import SlidingTowerMenu
 from world.game_map import MAP_SIZE
 
@@ -26,11 +27,15 @@ class DinoDefense(QtWidgets.QMainWindow):
         self.tower_menu = SlidingTowerMenu(self.centralwidget)
         self.tower_menu.tower_selected.connect(self.game_manager.set_build_mode)
 
+        self.stats_menu = SlidingStatsMenu(self.centralwidget)
+        self.game_manager.tower_clicked.connect(self.stats_menu.update_stats)
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
-
         if hasattr(self, "tower_menu"):
             self.tower_menu.update_position()
+        if hasattr(self, "stats_menu"):
+            self.stats_menu.update_position()
 
 
 if __name__ == "__main__":

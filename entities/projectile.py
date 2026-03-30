@@ -61,5 +61,5 @@ class Projectile(QGraphicsEllipseItem):
             )
 
             if dist <= self.aoe_radius:
-                dino.hp -= self.damage
+                dino.take_damage(self.damage)
                 print(dino.hp)

@@ -23,8 +23,8 @@ class Tile(QGraphicsPixmapItem):
     def __init__(self, x: int, y: int, tile_type: str, size: int = TILE_SIZE):
         super().__init__()
         self.setPos(x * size, y * size)
-        self.x_grid = x
-        self.y_grid = y
+        self.grid_x = x
+        self.grid_y = y
         self.texture = QPixmap(TILE_TEXTURES[tile_type]).scaled(TILE_SIZE, TILE_SIZE)
         self.setPixmap(self.texture)
         self.setZValue(-1)
@@ -47,9 +47,35 @@ class Tile(QGraphicsPixmapItem):
 
 
 class GameMap:
-    def __init__(self):
-        self.grid_size = GRID_SIZE
-        self.grid = self.generate_map()
+    def __init__(self, map_file_path=None):
+        if map_file_path:
+            self.grid = self.load_from_file(map_file_path)
+        else:
+            self.grid_size = GRID_SIZE
+            self.grid = self.generate_tiles()
+
+    def load_from_file(self, filepath: str) -> list:
+        grid = []
+
+        char_to_type = {"G": "grass", "S": "sand"}
+
+        with open(filepath, "r") as f:
+            lines = [line.strip() for line in f.readlines() if line.strip()]
+
+        self.grid_size = (len(lines[0]), len(lines))
+
+        global GRID_SIZE, MAP_SIZE
+        GRID_SIZE = self.grid_size
+        MAP_SIZE = (GRID_SIZE[0] * TILE_SIZE, GRID_SIZE[1] * TILE_SIZE)
+
+        for tile_y, row_str in enumerate(lines):
+            grid_row = []
+            for tile_x, char in enumerate(row_str):
+                tile_type = char_to_type.get(char.upper(), "grass")
+                grid_row.append(Tile(tile_x, tile_y, tile_type))
+            grid.append(grid_row)
+
+        return grid
 
     def __iter__(self):
         """Allows iterating over all tiles in a flattened way."""
@@ -62,27 +88,16 @@ class GameMap:
             for tile in row:
                 scene.addItem(tile)
 
-    def generate_map(self):
-        tiles = self.generate_tiles()
-        return tiles
-
     def generate_tiles(self) -> list:
         num_tiles = self.grid_size[0] * self.grid_size[1]
         tiles_types = random.choices(TILES, TILES_WEIGHTS, k=num_tiles)
-        # TODO: make the generation so that it creates "biomes"
         grid = []
         for tile_y in range(self.grid_size[1]):
             grid_row = []
             for tile_x in range(self.grid_size[0]):
-                tile_idx = TILE_SIZE * tile_y + tile_x
+                tile_idx = self.grid_size[0] * tile_y + tile_x
                 tile_type = tiles_types[tile_idx]
-                grid_row.append(
-                    Tile(
-                        tile_x,
-                        tile_y,
-                        tile_type,
-                    )
-                )
+                grid_row.append(Tile(tile_x, tile_y, tile_type))
             grid.append(grid_row)
         return grid
 

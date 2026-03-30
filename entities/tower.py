@@ -48,6 +48,10 @@ class BaseTower(QGraphicsPixmapItem):
         self.center_x = self.exact_x + self.texture.width() / 2
         self.center_y = self.exact_y + tile_size / 2
 
+        self.is_selected = False
+
+        self.target_mode = "Closest"
+
     def setup_range_circle(self):
         self.local_center_x = self.texture.width() / 2
         self.local_center_y = self.texture.height() - self.tile_size / 2
@@ -71,7 +75,8 @@ class BaseTower(QGraphicsPixmapItem):
         self.range_circle.show()
 
     def hoverLeaveEvent(self, event):
-        self.range_circle.hide()
+        if not self.is_selected:
+            self.range_circle.hide()
 
     def update_logic(self, dt: float, dinos: list):
         self.time_since_last_shot += dt
@@ -86,22 +91,30 @@ class BaseTower(QGraphicsPixmapItem):
         return None
 
     def find_target(self, dinos: list):
-        closest_dino = None
-        min_distance = self.range
-
-        my_x = self.center_x
-        my_y = self.center_y
+        """Finds a target based on the current target_mode."""
+        valid_targets = []
 
         for dino in dinos:
-            dx = dino.exact_x - my_x
-            dy = dino.exact_y - my_y
+            dx = dino.exact_x - self.center_x
+            dy = dino.exact_y - self.center_y
             dist = math.sqrt(dx**2 + dy**2)
 
-            if dist <= min_distance:
-                min_distance = dist
-                closest_dino = dino
+            if dist <= self.range:
+                valid_targets.append((dino, dist))
 
-        return closest_dino
+        if not valid_targets:
+            return None
+
+        if self.target_mode == "Closest":
+            valid_targets.sort(key=lambda x: x[1])
+
+        elif self.target_mode == "Most HP":
+            valid_targets.sort(key=lambda x: x[0].hp, reverse=True)
+
+        elif self.target_mode == "Least HP":
+            valid_targets.sort(key=lambda x: x[0].hp)
+
+        return valid_targets[0][0]
 
     def shoot(self, target):
         spawn_x = self.center_x
@@ -123,11 +136,13 @@ class BaseTower(QGraphicsPixmapItem):
 
 
 class BasicTower(BaseTower):
+    cost = 50
+
     def __init__(self, grid_y, grid_x, tile_size):
         super().__init__(grid_y, grid_x, tile_size, texture_key="basic")
 
         self.range = 240.0
-        self.fire_rate = 0.1
+        self.fire_rate = 0.5
         self.damage = 25
         self.aoe_radius = tile_size
         self.projectile_speed = 300
@@ -136,6 +151,8 @@ class BasicTower(BaseTower):
 
 
 class SniperTower(BaseTower):
+    cost = 120
+
     def __init__(self, grid_y, grid_x, tile_size):
         super().__init__(grid_y, grid_x, tile_size, texture_key="sniper")
 

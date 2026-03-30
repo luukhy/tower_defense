@@ -7,13 +7,13 @@
 [DONE] (2 pkt) Implementacja systemu wież opartych na klasie bazowej z polimorfizmem.
 
 
-(2 pkt) Implementacja systemu wyboru celu przez wieżę (np. najbliższy, najsłabszy, najbliżej celu).
+[DONE] (2 pkt) Implementacja systemu wyboru celu przez wieżę (np. najbliższy, najsłabszy, najbliżej celu).
 
 
 [DONE] (2 pkt) Implementacja systemu pocisków z czasem lotu i kolizją.
 
 
-(2 pkt) Implementacja systemu zarządzania zasobami i ekonomią gry (koszt budowy, nagrody, balans).
+[DONE] (2 pkt) Implementacja systemu zarządzania zasobami i ekonomią gry (koszt budowy, nagrody, balans).
 
 
 (1 pkt) Implementacja systemu ulepszania wież z drzewem upgrade’ów.

@@ -3,33 +3,39 @@
 import time
 
 from PyQt6 import QtCore
+from PyQt6.QtCore import QObject, pyqtSignal
 
 from core.wave_manager import WaveManager
 from entities.meteoro import Meteoro
 from entities.tower import BasicTower, SniperTower
 from world.game_map import GRID_SIZE, TILE_SIZE, GameMap
 
+TOWER_CLASSES = {"basic": BasicTower, "sniper": SniperTower}
 
-class GameManager:
+
+class GameManager(QObject):
+    tower_clicked = pyqtSignal(object)
+
     def __init__(self, scene):
-
+        super().__init__()
         self.scene = scene
 
         # map setup
-        self.game_map = GameMap()
+        self.game_map = GameMap("world/map.txt")
         self.game_map.add_to_scene(self.scene)
 
         # meteoro setup
-        self.meteoro_pos = (18, 18)  # (y_pos, x_pos)
-        self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
-        self.scene.addItem(self.meteoro)
-        self.set_meteoro_tiles_occupied(self.meteoro_pos)
+        self.meteoro_pos = (1, 1)  # (y_pos, x_pos)
+        # self.meteoro = Meteoro(self.meteoro_pos[1], self.meteoro_pos[0], TILE_SIZE)
+        # self.scene.addItem(self.meteoro)
+        # self.set_meteoro_tiles_occupied(self.meteoro_pos)
 
         self.wave_manager = WaveManager(
             self.game_map, target_x=self.meteoro_pos[1], target_y=self.meteoro_pos[0]
         )
 
-        self.dinos = self.wave_manager.spawn_wave(wave=1)
+        self.current_wave = 1
+        self.dinos = self.wave_manager.spawn_wave(wave=self.current_wave)
 
         for dino in self.dinos:
             self.scene.addItem(dino)
@@ -40,10 +46,15 @@ class GameManager:
         self.last_frame_time = time.time()
 
         self.selected_tower_type = "basic"
+        self.selected_tower_on_map = None
+
+        self.money = 120
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_game)
         self.timer.start(16)  # ~60 FPS
+
+        self.game_over = False
 
     def update_game(self):
         current_time = time.time()
@@ -71,17 +82,40 @@ class GameManager:
                 tile.is_empty = False
 
     def update_dinos(self, dt):
+        if self.game_over:
+            return
+
         for dino in self.dinos[:]:
             reached_end = dino.move_logic(dt)
 
             if reached_end:
-                print("Dino hit the Base!")
+                print("Dino hit the Base! Ouch!")
+                self.scene.removeItem(dino)
+                self.dinos.remove(dino)
+                continue
+
+            if dino.hp <= 0:
+                self.money += dino.reward
+                print(f"Dino killed! +${dino.reward}. Total: ${self.money}")
                 self.scene.removeItem(dino)
                 self.dinos.remove(dino)
 
-            if dino.hp <= 0:
-                self.scene.removeItem(dino)
-                self.dinos.remove(dino)
+        if len(self.dinos) == 0:
+            self.current_wave += 1
+            print(
+                f"Fala {self.current_wave - 1} pokonana. Start fali {self.current_wave}..."
+            )
+
+            new_wave = self.wave_manager.spawn_wave(wave=self.current_wave)
+
+            if not new_wave:
+                print("WYGRANA")
+                self.game_over = True
+                return
+
+            self.dinos = new_wave
+            for dino in self.dinos:
+                self.scene.addItem(dino)
 
     def update_towers(self, dt):
         for tower in self.towers:
@@ -103,33 +137,92 @@ class GameManager:
         grid_x = x // TILE_SIZE
         grid_y = y // TILE_SIZE
 
-        if not (0 <= grid_x < GRID_SIZE[0] and 0 <= grid_y < GRID_SIZE[1]):
+        if not (
+            0 <= grid_x < self.game_map.grid_size[0]
+            and 0 <= grid_y < self.game_map.grid_size[1]
+        ):
             return
 
         clicked_tile = self.game_map.grid[grid_y][grid_x]
 
         if not clicked_tile.is_empty:
-            print("Cannot build here!")
+            self.select_tower(grid_x, grid_y)
             return
 
-        print(f"Building tower at {grid_y}, {grid_x}!")
-        clicked_tile.is_empty = False
+        self.build_tower(clicked_tile)
+        self.update_dino_path(grid_x, grid_y)
 
-        new_tower = None
+    def select_tower(self, grid_x, grid_y):
+        clicked_tower = self.get_tower_at(grid_x, grid_y)
 
-        if self.selected_tower_type == "basic":
-            new_tower = BasicTower(grid_y, grid_x, TILE_SIZE)
-        elif self.selected_tower_type == "sniper":
-            new_tower = SniperTower(grid_y, grid_x, TILE_SIZE)
+        # toggle logic
+        if self.selected_tower_on_map == clicked_tower and clicked_tower is not None:
+            self.selected_tower_on_map.is_selected = False
+            self.selected_tower_on_map.range_circle.hide()
+            self.selected_tower_on_map = None
+            self.tower_clicked.emit(None)
+            return
 
-        if new_tower:
-            self.towers.append(new_tower)
-            self.scene.addItem(new_tower)
-            print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+        # deselect
+        if self.selected_tower_on_map:
+            self.selected_tower_on_map.is_selected = False
+            self.selected_tower_on_map.range_circle.hide()
+            self.selected_tower_on_map = None
 
+        # select new
+        if clicked_tower:
+            self.selected_tower_on_map = clicked_tower
+            self.selected_tower_on_map.is_selected = True
+            self.selected_tower_on_map.range_circle.show()
+
+            self.tower_clicked.emit(clicked_tower)
+            print(
+                f"Selected Tower! DMG: {clicked_tower.damage}, Range: {clicked_tower.range}"
+            )
+            return
+
+        self.tower_clicked.emit(None)
+
+    def update_dino_path(self, grid_x, grid_y):
         for dino in self.dinos:
             curr_x, curr_y = dino.get_curr_pos_grid()
             new_waypoints = self.game_map.get_path_a_star(
                 curr_x, curr_y, grid_x, grid_y
             )
             dino.update_path(new_waypoints)
+
+    def build_tower(self, clicked_tile):
+        grid_x = clicked_tile.grid_x
+        grid_y = clicked_tile.grid_y
+
+        tower_class = TOWER_CLASSES.get(self.selected_tower_type)
+
+        if not tower_class:
+            print("Error: Unknown tower type selected!")
+            return
+
+        if self.money < tower_class.cost:
+            print(
+                f"Not enough money! Need ${tower_class.cost}, but you only have ${self.money}."
+            )
+            return
+
+        self.money -= tower_class.cost
+        print(f"Spent ${tower_class.cost}. Remaining money: ${self.money}")
+
+        clicked_tile.is_empty = False
+        self.game_map.grid[grid_y][grid_x + 1].is_empty = False
+
+        new_tower = tower_class(grid_y, grid_x, TILE_SIZE)
+
+        self.towers.append(new_tower)
+        self.scene.addItem(new_tower)
+        print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+
+    def get_tower_at(self, grid_x, grid_y):
+        for tower in self.towers:
+            if tower.grid_y == grid_y and (
+                tower.grid_x == grid_x or tower.grid_x + 1 == grid_x
+            ):
+                return tower
+        return None

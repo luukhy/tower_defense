@@ -20,7 +20,11 @@ class WaveManager:
 
     def spawn_wave(self, wave) -> list[Dino]:
         """Calculates a wave and RETURNS a list of ready-to-go Dinos."""
-        wave_config = self.config[str(wave)]
+        wave_config = self.config.get(str(wave))
+
+        if not wave_config:
+            return []
+
         dinos_num_list = wave_config["dinos_num"]
         dino_types_list = wave_config["dino_types"]
 
@@ -79,7 +83,7 @@ class WaveManager:
         pos = []
         for id in random_idx:
             tile = walkable_tiles[id]
-            pos.append({"x": tile.x_grid, "y": tile.y_grid})
+            pos.append({"x": tile.grid_x, "y": tile.grid_y})
         return pos
 
 

@@ -1,8 +1,9 @@
 import math
 from pathlib import Path
 
-from PyQt6.QtGui import QPixmap, QTransform
-from PyQt6.QtWidgets import QGraphicsPixmapItem
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QBrush, QColor, QPen, QPixmap, QTransform
+from PyQt6.QtWidgets import QGraphicsPixmapItem, QGraphicsRectItem
 
 from world.game_map import TILE_SIZE
 
@@ -56,7 +57,43 @@ class Dino(QGraphicsPixmapItem):
         self.waypoints = list(waypoints)
 
         self.speed = 40.0  # px/s
-        self.hp = 100
+
+        self.max_hp = 100.0
+        self.hp = self.max_hp
+        self.reward = 15
+
+        # health bar
+        self.bar_width = self.texture.width()
+        self.bar_height = 5
+
+        x_pos = 0
+        y_pos = -10
+
+        # black bg
+        self.border_hp_bar = QGraphicsRectItem(
+            x_pos - 2, y_pos - 2, self.bar_width + 4, self.bar_height + 4, self
+        )
+        self.border_hp_bar.setBrush(QBrush(QColor(0, 0, 0)))
+        self.border_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # red bg
+        self.bg_hp_bar = QGraphicsRectItem(
+            x_pos, y_pos, self.bar_width, self.bar_height, self
+        )
+        self.bg_hp_bar.setBrush(QBrush(QColor(200, 0, 0)))
+        self.bg_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # green fg
+        self.fg_hp_bar = QGraphicsRectItem(
+            x_pos, y_pos, self.bar_width, self.bar_height, self
+        )
+        self.fg_hp_bar.setBrush(QBrush(QColor(0, 200, 0)))
+        self.fg_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # hide health bar when at full hp
+        self.bg_hp_bar.hide()
+        self.border_hp_bar.hide()
+        self.fg_hp_bar.hide()
 
     def move_logic(self, dt: float) -> bool:
         """Called every frame. Returns True if reached the end, False otherwise."""
@@ -94,6 +131,22 @@ class Dino(QGraphicsPixmapItem):
         self.setZValue(self.exact_y + 40)
 
         return False
+
+    def take_damage(self, amount: float):
+        self.hp -= amount
+
+        if self.hp < 0:
+            self.hp = 0
+
+        # show the bar only after they take damage
+        self.bg_hp_bar.show()
+        self.fg_hp_bar.show()
+        self.border_hp_bar.show()
+
+        health_ratio = self.hp / self.max_hp
+        new_width = self.bar_width * health_ratio
+
+        self.fg_hp_bar.setRect(0, -10, new_width, self.bar_height)
 
     def update_path(self, waypoints):
         self.waypoints = list(waypoints)
