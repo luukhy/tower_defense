@@ -4,7 +4,7 @@
 [DONE] (2 pkt) Implementacja systemu fal przeciwników sterowanego konfiguracją (np. JSON).
 
 
-(2 pkt) Implementacja systemu wież opartych na klasie bazowej z polimorfizmem.
+[DONE] (2 pkt) Implementacja systemu wież opartych na klasie bazowej z polimorfizmem.
 
 
 (2 pkt) Implementacja systemu wyboru celu przez wieżę (np. najbliższy, najsłabszy, najbliżej celu).
@@ -25,7 +25,7 @@
 (1 pkt) Implementacja mechanizmu konfiguracji mapy i fal przeciwników z pliku.
 
 
-(+3 pkt) Implementacja dynamicznego pathfindingu (A) dla przeciwników*, który reaguje na nowe wieże.
+[DONE] (+3 pkt) Implementacja dynamicznego pathfindingu (A) dla przeciwników*, który reaguje na nowe wieże.
 
 
 (+3 pkt) Implementacja systemu balansowania fal przeciwników.

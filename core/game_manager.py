@@ -6,7 +6,7 @@ from PyQt6 import QtCore
 
 from core.wave_manager import WaveManager
 from entities.meteoro import Meteoro
-from entities.tower import Tower
+from entities.tower import BasicTower, SniperTower
 from world.game_map import GRID_SIZE, TILE_SIZE, GameMap
 
 
@@ -39,6 +39,8 @@ class GameManager:
 
         self.last_frame_time = time.time()
 
+        self.selected_tower_type = "basic"
+
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_game)
         self.timer.start(16)  # ~60 FPS
@@ -54,6 +56,11 @@ class GameManager:
         self.update_dinos(dt)
         self.update_towers(dt)
         self.update_projectiles(dt)
+
+    def set_build_mode(self, tower_type: str):
+        """Called by the UI buttons to change what we build next."""
+        self.selected_tower_type = tower_type
+        print(f"Build mode changed to: {tower_type}")
 
     def set_meteoro_tiles_occupied(self, meteoro_pos: tuple):
         for row in range(meteoro_pos[1], meteoro_pos[1] + 3):
@@ -93,24 +100,36 @@ class GameManager:
                 self.projectiles.remove(proj)
 
     def handle_map_click(self, x, y):
-        col = x // TILE_SIZE
-        row = y // TILE_SIZE
+        grid_x = x // TILE_SIZE
+        grid_y = y // TILE_SIZE
 
-        if 0 <= col < GRID_SIZE[0] and 0 <= row < GRID_SIZE[1]:
-            clicked_tile = self.game_map.grid[row][col]
+        if not (0 <= grid_x < GRID_SIZE[0] and 0 <= grid_y < GRID_SIZE[1]):
+            return
 
-            if clicked_tile.is_empty:
-                print(f"Building tower at {row}, {col}!")
+        clicked_tile = self.game_map.grid[grid_y][grid_x]
 
-                clicked_tile.is_empty = False
-                new_tower = Tower(row, col, TILE_SIZE)
-                self.towers.append(new_tower)
-                self.scene.addItem(new_tower)
-                for dino in self.dinos:
-                    curr_x, curr_y = dino.get_curr_pos_grid()
-                    new_waypoints = self.game_map.get_path_a_star(
-                        curr_x, curr_y, col, row
-                    )
-                    dino.update_path(new_waypoints)
-            else:
-                print("Cannot build here!")
+        if not clicked_tile.is_empty:
+            print("Cannot build here!")
+            return
+
+        print(f"Building tower at {grid_y}, {grid_x}!")
+        clicked_tile.is_empty = False
+
+        new_tower = None
+
+        if self.selected_tower_type == "basic":
+            new_tower = BasicTower(grid_y, grid_x, TILE_SIZE)
+        elif self.selected_tower_type == "sniper":
+            new_tower = SniperTower(grid_y, grid_x, TILE_SIZE)
+
+        if new_tower:
+            self.towers.append(new_tower)
+            self.scene.addItem(new_tower)
+            print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+
+        for dino in self.dinos:
+            curr_x, curr_y = dino.get_curr_pos_grid()
+            new_waypoints = self.game_map.get_path_a_star(
+                curr_x, curr_y, grid_x, grid_y
+            )
+            dino.update_path(new_waypoints)

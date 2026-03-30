@@ -8,14 +8,20 @@ from entities.projectile import Projectile
 
 resources_path = Path("res/textures")
 
-towers_textures = {"default": resources_path / Path("tower_default.png")}
+towers_textures = {
+    "basic": resources_path / Path("tower_default.png"),
+    "sniper": resources_path / Path("tower_2.png"),
+}
 
 
-class Tower(QGraphicsPixmapItem):
-    def __init__(self, grid_y, grid_x, tile_size, type=None):
+class BaseTower(QGraphicsPixmapItem):
+    """Base class for all towers. Handles rendering and default logic."""
+
+    def __init__(self, grid_y, grid_x, tile_size, texture_key="basic"):
         super().__init__()
         self.tile_size = tile_size
-        tex_path = towers_textures["default"]
+
+        tex_path = towers_textures.get(texture_key, towers_textures["basic"])
         self.texture = QPixmap(str(tex_path))
 
         if self.texture.isNull():
@@ -31,20 +37,18 @@ class Tower(QGraphicsPixmapItem):
 
         self.setPos(self.exact_x, self.exact_y - offset_y)
         self.setPixmap(self.texture)
-
         self.setZValue(self.grid_y)
 
-        # stats
-        self.range = 240.0  # radius px
-        self.fire_rate = 0.1  # seconds
-        self.damage = 25
-        self.aoe_radius = 40
-
+        self.range = 0.0
+        self.fire_rate = 1.0
+        self.damage = 0
+        self.aoe_radius = 0.0
         self.time_since_last_shot = 0.0
 
         self.center_x = self.exact_x + self.texture.width() / 2
         self.center_y = self.exact_y + tile_size / 2
 
+    def setup_range_circle(self):
         self.local_center_x = self.texture.width() / 2
         self.local_center_y = self.texture.height() - self.tile_size / 2
 
@@ -58,7 +62,6 @@ class Tower(QGraphicsPixmapItem):
 
         self.range_circle.setBrush(QColor(150, 150, 150, 100))
         self.range_circle.setPen(QPen(QColor(255, 255, 255, 150)))
-
         self.range_circle.setZValue(-1)
 
         self.setAcceptHoverEvents(True)
@@ -83,7 +86,6 @@ class Tower(QGraphicsPixmapItem):
         return None
 
     def find_target(self, dinos: list):
-        """Finds the closest Dino within range."""
         closest_dino = None
         min_distance = self.range
 
@@ -102,7 +104,6 @@ class Tower(QGraphicsPixmapItem):
         return closest_dino
 
     def shoot(self, target):
-        """Creates and returns a bullet aimed at the ground."""
         spawn_x = self.center_x
         spawn_y = self.center_y - (self.texture.height() / 2)
 
@@ -116,5 +117,49 @@ class Tower(QGraphicsPixmapItem):
             target_y=target_ground_y,
             damage=self.damage,
             aoe_radius=self.aoe_radius,
+            speed=self.projectile_speed,
         )
         return new_bullet
+
+
+class BasicTower(BaseTower):
+    def __init__(self, grid_y, grid_x, tile_size):
+        super().__init__(grid_y, grid_x, tile_size, texture_key="basic")
+
+        self.range = 240.0
+        self.fire_rate = 0.1
+        self.damage = 25
+        self.aoe_radius = tile_size
+        self.projectile_speed = 300
+
+        self.setup_range_circle()
+
+
+class SniperTower(BaseTower):
+    def __init__(self, grid_y, grid_x, tile_size):
+        super().__init__(grid_y, grid_x, tile_size, texture_key="sniper")
+
+        self.range = 500.0
+        self.fire_rate = 2.0
+        self.damage = 100
+        self.aoe_radius = tile_size
+        self.projectile_speed = 1000
+
+        self.setup_range_circle()
+
+    def find_target(self, dinos: list):
+        """Ignores distance, targets the Dino with the most hp"""
+        best_target = None
+        highest_hp = 0
+
+        for dino in dinos:
+            dx = dino.exact_x - self.center_x
+            dy = dino.exact_y - self.center_y
+            dist = math.sqrt(dx**2 + dy**2)
+
+            if dist <= self.range:
+                if dino.hp > highest_hp:
+                    highest_hp = dino.hp
+                    best_target = dino
+
+        return best_target

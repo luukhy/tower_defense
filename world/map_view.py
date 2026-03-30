@@ -30,13 +30,13 @@ class MapView(QtWidgets.QGraphicsView):
         zoom_in_factor = ZOOM_IN_FACTOR
         zoom_out_factor = 1.0 / zoom_in_factor
 
-        # Scrolling UP (Zoom In)
+        # scrolling up
         if event.angleDelta().y() > 0:
             if self.zoom < self.zoom_max:
                 self.scale(zoom_in_factor, zoom_in_factor)
                 self.zoom += 1
 
-        # Scrolling DOWN (Zoom Out)
+        # scrolling down
         else:
             if self.zoom > self.zoom_min:
                 self.scale(zoom_out_factor, zoom_out_factor)
