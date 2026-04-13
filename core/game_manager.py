@@ -3,8 +3,11 @@
 import time
 
 from PyQt6 import QtCore
-from PyQt6.QtCore import QObject, pyqtSignal
+from PyQt6.QtCore import QObject, Qt, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QPen
+from PyQt6.QtWidgets import QGraphicsRectItem
 
+from core.network_client import NetworkClient
 from core.wave_manager import WaveManager
 from entities.meteoro import Meteoro
 from entities.tower import BasicTower, SniperTower
@@ -55,6 +58,19 @@ class GameManager(QObject):
         self.timer.start(16)  # ~60 FPS
 
         self.game_over = False
+
+        self.opponent_cursor = QGraphicsRectItem(0, 0, TILE_SIZE, TILE_SIZE)
+        self.opponent_cursor.setBrush(QBrush(QColor(0, 0, 255, 100)))
+        self.opponent_cursor.setPen(QPen(Qt.PenStyle.NoPen))
+        self.opponent_cursor.setZValue(999)
+        self.opponent_cursor.hide()
+        self.scene.addItem(self.opponent_cursor)
+
+        self.network_client = NetworkClient(player_id=f"Player_{str(time.time())[-4:]}")
+        self.network_client.message_received_signal.connect(
+            self.process_network_message
+        )
+        self.network_client.start()
 
     def update_game(self):
         current_time = time.time()
@@ -143,6 +159,8 @@ class GameManager(QObject):
         grid_x = x // TILE_SIZE
         grid_y = y // TILE_SIZE
 
+        self.network_client.send_message({"action": "MOVE", "x": grid_x, "y": grid_y})
+
         if not (
             0 <= grid_x < self.game_map.grid_size[0]
             and 0 <= grid_y < self.game_map.grid_size[1]
@@ -198,7 +216,7 @@ class GameManager(QObject):
             )
             dino.update_path(new_waypoints)
 
-    def build_tower(self, clicked_tile) -> bool:
+    def build_tower(self, clicked_tile, is_network_build=False) -> bool:
         grid_x = clicked_tile.grid_x
         grid_y = clicked_tile.grid_y
 
@@ -225,6 +243,21 @@ class GameManager(QObject):
         self.towers.append(new_tower)
         self.scene.addItem(new_tower)
         print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+
+        self.towers.append(new_tower)
+        self.scene.addItem(new_tower)
+        print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+
+        if not is_network_build:
+            self.network_client.send_message(
+                {
+                    "action": "BUILD",
+                    "tower_type": self.selected_tower_type,
+                    "x": grid_x,
+                    "y": grid_y,
+                }
+            )
+
         return True
 
     def get_tower_at(self, grid_x, grid_y):
@@ -234,3 +267,32 @@ class GameManager(QObject):
             ):
                 return tower
         return None
+
+    def process_network_message(self, data: dict):
+        """Triggered automatically when the QThread receives JSON from the server."""
+        action = data.get("action")
+        sender_id = data.get("id")
+
+        if action == "MOVE":
+            grid_x = data.get("x")
+            grid_y = data.get("y")
+
+            self.opponent_cursor.show()
+            self.opponent_cursor.setPos(grid_x * TILE_SIZE, grid_y * TILE_SIZE)
+
+        elif action == "BUILD":
+            grid_x = data.get("x")
+            grid_y = data.get("y")
+            tower_type = data.get("tower_type")
+
+            print(f"Network: {sender_id} built a {tower_type} at {grid_x}, {grid_y}")
+
+            target_tile = self.game_map.grid[grid_y][grid_x]
+
+            old_type = self.selected_tower_type
+            self.selected_tower_type = tower_type
+
+            self.build_tower(target_tile, is_network_build=True)
+
+            self.selected_tower_type = old_type
+            self.update_dino_path(grid_x, grid_y)
