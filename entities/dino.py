@@ -58,6 +58,7 @@ class Dino(QGraphicsPixmapItem):
 
         self.speed = 40.0  # px/s
 
+        self.damage = 10
         self.max_hp = 100.0
         self.hp = self.max_hp
         self.reward = 15
@@ -156,3 +157,36 @@ class Dino(QGraphicsPixmapItem):
 
     def get_curr_pos_grid(self):
         return (self.grid_x, self.grid_y)
+
+
+class Triceratops(Dino):
+    def __init__(
+        self,
+        grid_y: int,
+        grid_x: int,
+        waypoints: list[tuple[float, float]],
+        tile_size: int = TILE_SIZE,
+    ):
+        super().__init__(grid_y, grid_x, "triceratops", waypoints, tile_size)
+        self.speed = 30.0
+        self.max_hp = 250.0
+        self.hp = self.max_hp
+        self.reward = 30
+        self.damage = 10
+
+
+class TRex(Dino):
+    def __init__(
+        self,
+        grid_y: int,
+        grid_x: int,
+        waypoints: list[tuple[float, float]],
+        tile_size: int = TILE_SIZE,
+    ):
+        super().__init__(grid_y, grid_x, "t_rex", waypoints, tile_size)
+
+        self.speed = 55.0
+        self.max_hp = 600.0
+        self.hp = self.max_hp
+        self.reward = 100
+        self.damage = 20

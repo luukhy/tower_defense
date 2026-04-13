@@ -3,6 +3,7 @@
 import json
 import random
 
+from core.enemy_factory import EnemyFactory
 from entities.dino import Dino
 
 with open("core/config.json", "r") as file:
@@ -18,15 +19,17 @@ class WaveManager:
         self.target_y = target_y
         self.config = config
 
-    def spawn_wave(self, wave) -> list[Dino]:
-        """Calculates a wave and RETURNS a list of ready-to-go Dinos."""
+    def spawn_wave(self, wave) -> list:
+        """Calculates a wave and returns a list of dinos."""
+
+        wave_config = config
         wave_config = self.config.get(str(wave))
 
         if not wave_config:
             return []
 
-        dinos_num_list = wave_config["dinos_num"]
-        dino_types_list = wave_config["dino_types"]
+        dino_types_list = [group["type"] for group in wave_config]
+        dinos_num_list = [group["count"] for group in wave_config]
 
         total_dinos = sum(dinos_num_list)
         dinos_pos = self.generate_dinos_pos(total_dinos)
@@ -43,8 +46,8 @@ class WaveManager:
             )
 
             if path:
-                new_dino = Dino(
-                    grid_y=start_y, grid_x=start_x, dino_type=dino_type, waypoints=path
+                new_dino = EnemyFactory.create_enemy(
+                    enemy_type=dino_type, grid_y=start_y, grid_x=start_x, waypoints=path
                 )
                 new_wave.append(new_dino)
             else:
@@ -63,7 +66,6 @@ class WaveManager:
             if curr_id < running_sum:
                 return types_list[i]
 
-        # if anything goes wrong
         return types_list[-1]
 
     def add_dinos_to_scene(self):

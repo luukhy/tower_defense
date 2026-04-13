@@ -22,7 +22,7 @@
 (1 pkt) Implementacja systemu stanów przeciwników (np. spowolnienie, zatrucie).
 
 
-(1 pkt) Implementacja mechanizmu konfiguracji mapy i fal przeciwników z pliku.
+[DONE] (1 pkt) Implementacja mechanizmu konfiguracji mapy i fal przeciwników z pliku.
 
 
 [DONE] (+3 pkt) Implementacja dynamicznego pathfindingu (A) dla przeciwników*, który reaguje na nowe wieże.
@@ -32,3 +32,5 @@
 
 
 (+4 pkt) Implementacja symulacji gry w trybie przyspieszonym do testowania balansu.
+
+MAX: 25pkt

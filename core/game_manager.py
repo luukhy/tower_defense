@@ -21,7 +21,7 @@ class GameManager(QObject):
         self.scene = scene
 
         # map setup
-        self.game_map = GameMap("world/map.txt")
+        self.game_map = GameMap()
         self.game_map.add_to_scene(self.scene)
 
         # meteoro setup
@@ -48,7 +48,7 @@ class GameManager(QObject):
         self.selected_tower_type = "basic"
         self.selected_tower_on_map = None
 
-        self.money = 120
+        self.money = 200
 
         self.timer = QtCore.QTimer()
         self.timer.timeout.connect(self.update_game)
@@ -90,6 +90,12 @@ class GameManager(QObject):
 
             if reached_end:
                 print("Dino hit the Base! Ouch!")
+
+                hit_tower = self.get_tower_at(dino.grid_x, dino.grid_y)
+                hit_tower.take_damage(dino.damage)
+                if hit_tower.hp <= 0:
+                    self.scene.removeItem(hit_tower)
+                    self.dinos.remove(hit_tower)
                 self.scene.removeItem(dino)
                 self.dinos.remove(dino)
                 continue
@@ -149,8 +155,9 @@ class GameManager(QObject):
             self.select_tower(grid_x, grid_y)
             return
 
-        self.build_tower(clicked_tile)
-        self.update_dino_path(grid_x, grid_y)
+        tower_built = self.build_tower(clicked_tile)
+        if tower_built:
+            self.update_dino_path(grid_x, grid_y)
 
     def select_tower(self, grid_x, grid_y):
         clicked_tower = self.get_tower_at(grid_x, grid_y)
@@ -191,7 +198,7 @@ class GameManager(QObject):
             )
             dino.update_path(new_waypoints)
 
-    def build_tower(self, clicked_tile):
+    def build_tower(self, clicked_tile) -> bool:
         grid_x = clicked_tile.grid_x
         grid_y = clicked_tile.grid_y
 
@@ -199,13 +206,13 @@ class GameManager(QObject):
 
         if not tower_class:
             print("Error: Unknown tower type selected!")
-            return
+            return False
 
         if self.money < tower_class.cost:
             print(
                 f"Not enough money! Need ${tower_class.cost}, but you only have ${self.money}."
             )
-            return
+            return False
 
         self.money -= tower_class.cost
         print(f"Spent ${tower_class.cost}. Remaining money: ${self.money}")
@@ -218,6 +225,7 @@ class GameManager(QObject):
         self.towers.append(new_tower)
         self.scene.addItem(new_tower)
         print(f"Built a {self.selected_tower_type} tower at ({grid_x}, {grid_y})!")
+        return True
 
     def get_tower_at(self, grid_x, grid_y):
         for tower in self.towers:

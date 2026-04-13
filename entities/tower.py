@@ -1,8 +1,9 @@
 import math
 from pathlib import Path
 
-from PyQt6.QtGui import QColor, QPen, QPixmap
-from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsPixmapItem
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QBrush, QColor, QPen, QPixmap
+from PyQt6.QtWidgets import QGraphicsEllipseItem, QGraphicsPixmapItem, QGraphicsRectItem
 
 from entities.projectile import Projectile
 
@@ -39,6 +40,8 @@ class BaseTower(QGraphicsPixmapItem):
         self.setPixmap(self.texture)
         self.setZValue(self.grid_y)
 
+        self.hp = 100
+        self.max_hp = self.hp
         self.range = 0.0
         self.fire_rate = 1.0
         self.damage = 0
@@ -51,6 +54,39 @@ class BaseTower(QGraphicsPixmapItem):
         self.is_selected = False
 
         self.target_mode = "Closest"
+
+        self.bar_width = self.texture.width()
+        self.bar_height = 5
+
+        # black bg
+        self.border_hp_bar = QGraphicsRectItem(
+            self.exact_x - 2,
+            self.exact_y - 2,
+            self.bar_width + 4,
+            self.bar_height + 4,
+            self,
+        )
+        self.border_hp_bar.setBrush(QBrush(QColor(0, 0, 0)))
+        self.border_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # red bg
+        self.bg_hp_bar = QGraphicsRectItem(
+            self.exact_x, self.exact_y, self.bar_width, self.bar_height, self
+        )
+        self.bg_hp_bar.setBrush(QBrush(QColor(200, 0, 0)))
+        self.bg_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # green fg
+        self.fg_hp_bar = QGraphicsRectItem(
+            self.exact_x, self.exact_y, self.bar_width, self.bar_height, self
+        )
+        self.fg_hp_bar.setBrush(QBrush(QColor(0, 200, 0)))
+        self.fg_hp_bar.setPen(QPen(Qt.PenStyle.NoPen))
+
+        # hide health bar when at full hp
+        self.bg_hp_bar.hide()
+        self.border_hp_bar.hide()
+        self.fg_hp_bar.hide()
 
     def setup_range_circle(self):
         self.local_center_x = self.texture.width() / 2
@@ -134,6 +170,20 @@ class BaseTower(QGraphicsPixmapItem):
         )
         return new_bullet
 
+    def take_damage(self, damage):
+        if self.hp < 0:
+            self.hp = 0
+
+        # show the bar only after it take damage
+        self.bg_hp_bar.show()
+        self.fg_hp_bar.show()
+        self.border_hp_bar.show()
+
+        health_ratio = self.hp / self.max_hp
+        new_width = self.bar_width * health_ratio
+
+        self.fg_hp_bar.setRect(0, -10, new_width, self.bar_height)
+
 
 class BasicTower(BaseTower):
     cost = 50
@@ -141,6 +191,8 @@ class BasicTower(BaseTower):
     def __init__(self, grid_y, grid_x, tile_size):
         super().__init__(grid_y, grid_x, tile_size, texture_key="basic")
 
+        self.hp = 100
+        self.max_hp = self.hp
         self.range = 240.0
         self.fire_rate = 0.5
         self.damage = 25
@@ -156,6 +208,8 @@ class SniperTower(BaseTower):
     def __init__(self, grid_y, grid_x, tile_size):
         super().__init__(grid_y, grid_x, tile_size, texture_key="sniper")
 
+        self.hp = 50
+        self.max_hp = self.hp
         self.range = 500.0
         self.fire_rate = 2.0
         self.damage = 100

@@ -1,10 +1,13 @@
 {
-	"1": {
-		"dino_types": ["triceratops", "t_rex"],
-		"dinos_num": [20, 10]
-		},
-	"2": {
-		"dino_types": ["velociraptor", "t_rex"],
-		"dinos_num": [15, 15]
-		}
+	"1": [
+		{"type": "triceratops", "count": 8}
+	],
+	"2": [
+		{"type": "triceratops", "count": 0},
+		{"type": "t_rex", "count": 5}
+	],
+	"3": [
+		{"type": "triceratops", "count": 15},
+		{"type": "t_rex", "count": 6}
+	]
 }
